@@ -15,6 +15,7 @@ import party.lemons.bettercompass.BetterCompass;
 public class ModConfig
 {
 	public static boolean showCustomLocationText = true;
+	public static boolean allowCompassInAllDimensions = false;
 
 	@SubscribeEvent
 	public static void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event)

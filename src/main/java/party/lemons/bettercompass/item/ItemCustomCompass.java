@@ -54,6 +54,7 @@ public class ItemCustomCompass extends ItemCompass
 				else
 				{
 					boolean flag = entityIn != null;
+					NBTTagCompound tags = stack.getTagCompound();
 					Entity entity = flag ? entityIn : stack.getItemFrame();
 
 					if (worldIn == null)
@@ -62,8 +63,14 @@ public class ItemCustomCompass extends ItemCompass
 					}
 
 					double d0;
+					int dim = 0;
+					if(tags != null && tags.hasKey("dim"))
+						dim = tags.getInteger("dim");
 
-					if (worldIn.provider.isSurfaceWorld())
+					boolean isSameDim = entityIn.dimension == dim;
+					boolean show = isSameDim && (worldIn.provider.isSurfaceWorld() || ModConfig.allowCompassInAllDimensions);
+
+					if (show)
 					{
 						double d1 = flag ? (double)entity.rotationYaw : this.getFrameRotation((EntityItemFrame)entity);
 						d1 = MathHelper.positiveModulo(d1 / 360.0D, 1.0D);
@@ -79,7 +86,7 @@ public class ItemCustomCompass extends ItemCompass
 				}
 			}
 
-			//TODO: Fix this to work as intended by bv anilla
+			//TODO: Fix this to work as intended by by vanilla
 			@SideOnly(Side.CLIENT)
 			private double wobble(World worldIn, double p_185093_2_)
 			{
@@ -118,12 +125,18 @@ public class ItemCustomCompass extends ItemCompass
 
 	public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
 	{
+		if(!ModConfig.allowCompassInAllDimensions && !worldIn.provider.isSurfaceWorld())
+		{
+			return EnumActionResult.FAIL;
+		}
+
 		ItemStack stack = player.getHeldItem(hand);
 		NBTTagCompound tags = stack.getTagCompound();
 		if(tags == null)
 			tags = new NBTTagCompound();
 
 		tags.setTag("pos", NBTUtil.createPosTag(pos));
+		tags.setInteger("dim", player.dimension);
 
 		player.getHeldItem(hand).setTagCompound(tags);
 		player.sendStatusMessage(new TextComponentTranslation("bettercompass.message.set"), true);
@@ -138,6 +151,16 @@ public class ItemCustomCompass extends ItemCompass
 			pos = NBTUtil.getPosFromTag(stack.getTagCompound().getCompoundTag("pos"));
 		}
 		return pos;
+	}
+
+	public static int getDimensionFromStack(ItemStack stack)
+	{
+		int dim = 0 ;
+		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("dim"))
+		{
+			return stack.getTagCompound().getInteger("dim");
+		}
+		return dim;
 	}
 
 	@SideOnly(Side.CLIENT)
