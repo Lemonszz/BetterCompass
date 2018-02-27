@@ -37,12 +37,6 @@ public class ItemCustomCompass extends ItemCompass
 	{
 		this.addPropertyOverride(new ResourceLocation("angle"), new IItemPropertyGetter()
 		{
-			@SideOnly(Side.CLIENT)
-			double rotation;
-			@SideOnly(Side.CLIENT)
-			double rota;
-			@SideOnly(Side.CLIENT)
-			long lastUpdateTick;
 
 			@SideOnly(Side.CLIENT)
 			public float apply(ItemStack stack, @Nullable World worldIn, @Nullable EntityLivingBase entityIn)
@@ -79,28 +73,13 @@ public class ItemCustomCompass extends ItemCompass
 					}
 					else
 					{
-						d0 = Math.random();
+						if(tags != null && tags.hasKey("rotation"))
+							d0 = tags.getDouble("rotation");
+						else
+							d0 = Math.random();
 					}
-
 					return MathHelper.positiveModulo((float)d0, 1.0F);
 				}
-			}
-
-			//TODO: Fix this to work as intended by by vanilla
-			@SideOnly(Side.CLIENT)
-			private double wobble(World worldIn, double p_185093_2_)
-			{
-				if (worldIn.getTotalWorldTime() != this.lastUpdateTick)
-				{
-					this.lastUpdateTick = worldIn.getTotalWorldTime();
-					double d0 = p_185093_2_ - this.rotation;
-					d0 = MathHelper.positiveModulo(d0 + 0.5D, 1.0D) - 0.5D;
-					this.rota += d0 * 0.1D;
-					this.rota *= 0.8D;
-					this.rotation = MathHelper.positiveModulo(this.rotation + this.rota, 1.0D);
-				}
-
-				return this.rotation;
 			}
 
 			@SideOnly(Side.CLIENT)
@@ -173,4 +152,40 @@ public class ItemCustomCompass extends ItemCompass
 		}
 	}
 
+	@SideOnly(Side.CLIENT)
+	public void onUpdate(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected)
+	{
+		if(worldIn.isRemote)
+		{
+			if(stack.hasTagCompound())
+			{
+				NBTTagCompound tags = stack.getTagCompound();
+
+				long lastUpdateTick = 0;
+				double rotation = 0;
+				double rota = 0;
+				if(tags.hasKey("last_update"))
+					lastUpdateTick = tags.getLong("last_update");
+				if(tags.hasKey("rotation"))
+					rotation = tags.getDouble("rotation");
+				if(tags.hasKey("rota"))
+					rota = tags.getDouble("rota");
+
+
+				if (worldIn.getTotalWorldTime() != lastUpdateTick)
+				{
+					lastUpdateTick = worldIn.getTotalWorldTime();
+					double d0 = Math.random() - rotation;
+					d0 = MathHelper.positiveModulo(d0 + 0.5D, 1.0D) - 0.5D;
+					rota += d0 * 0.1D;
+					rota *= 0.8D;
+					rotation = MathHelper.positiveModulo(rotation + rota, 1.0D);
+
+					tags.setLong("last_update", lastUpdateTick);
+					tags.setDouble("rotation", rotation);
+					tags.setDouble("rota", rota);
+				}
+			}
+		}
+	}
 }
