@@ -1,5 +1,7 @@
 package party.lemons.bettercompass.item;
 
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -17,11 +19,14 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import party.lemons.bettercompass.config.ModConfig;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * Created by Sam on 3/02/2018.
@@ -134,4 +139,15 @@ public class ItemCustomCompass extends ItemCompass
 		}
 		return pos;
 	}
+
+	@SideOnly(Side.CLIENT)
+	public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
+	{
+		if(ModConfig.showCustomLocationText)
+		if(stack.getTagCompound() != null && stack.getTagCompound().hasKey("pos"))
+		{
+			tooltip.add(TextFormatting.DARK_PURPLE + I18n.format("bettercompass.message.info"));
+		}
+	}
+
 }
