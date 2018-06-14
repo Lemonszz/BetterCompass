@@ -23,6 +23,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import party.lemons.bettercompass.config.CompassSetting;
 import party.lemons.bettercompass.config.ModConfig;
 
 import javax.annotation.Nullable;
@@ -109,7 +110,14 @@ public class ItemCustomCompass extends ItemCompass
 			return EnumActionResult.FAIL;
 		}
 
+		if(ModConfig.compassActivateType == CompassSetting.SNEAK && !player.isSneaking())
+			return EnumActionResult.FAIL;
+
 		ItemStack stack = player.getHeldItem(hand);
+
+		if(ModConfig.compassActivateType == CompassSetting.REQUIRE_EMPTY && stack.hasTagCompound())
+			return EnumActionResult.FAIL;
+
 		NBTTagCompound tags = stack.getTagCompound();
 		if(tags == null)
 			tags = new NBTTagCompound();
@@ -145,10 +153,33 @@ public class ItemCustomCompass extends ItemCompass
 	@SideOnly(Side.CLIENT)
 	public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
 	{
-		if(ModConfig.showCustomLocationText)
+
 		if(stack.getTagCompound() != null && stack.getTagCompound().hasKey("pos"))
 		{
-			tooltip.add(TextFormatting.DARK_PURPLE + I18n.format("bettercompass.message.info"));
+			if(ModConfig.showCustomLocationText)
+				tooltip.add(TextFormatting.DARK_PURPLE + I18n.format("bettercompass.message.info"));
+
+			if(ModConfig.showLocationInfoText && worldIn != null)
+			{
+				BlockPos pos = getPositionFromStack(stack, worldIn);
+				int dim = getDimensionFromStack(stack);
+				String dimText = String.valueOf(dim);
+				switch(dim)
+				{
+					case 0:
+							dimText = "bettercompass.message.info.overworld";
+						break;
+					case -1:
+						dimText = "bettercompass.message.info.nether";
+						break;
+					case 1:
+						dimText = "bettercompass.message.info.end";
+						break;
+				}
+
+				tooltip.add(TextFormatting.GRAY +  "x: " + pos.getX() + ", y: " + pos.getY() + ", z: " + pos.getZ());
+				tooltip.add(TextFormatting.GRAY + I18n.format("bettercompass.message.info.dimension") + ": " + I18n.format(dimText));
+			}
 		}
 	}
 

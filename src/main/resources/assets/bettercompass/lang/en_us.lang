@@ -1,2 +1,7 @@
 bettercompass.message.set=Your compass has been set
 bettercompass.message.info=Custom Location
+
+bettercompass.message.info.overworld=The Overworld
+bettercompass.message.info.nether=The Nether
+bettercompass.message.info.end=The End
+bettercompass.message.info.dimension=Dimension
