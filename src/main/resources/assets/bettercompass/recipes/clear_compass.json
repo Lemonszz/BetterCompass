@@ -1,5 +1,17 @@
 {
+  "_comment": [
+      "Clear standard compass recipe"
+   ],
   "type": "minecraft:crafting_shapeless",
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": {
+        "type" : "minecraft:item_exists",
+        "item" : "bettercompass:homing_compass"
+      }
+    }
+  ],
   "ingredients": [
     {
       "item": "minecraft:compass"
