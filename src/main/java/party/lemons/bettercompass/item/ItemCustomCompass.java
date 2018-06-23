@@ -42,7 +42,10 @@ public class ItemCustomCompass extends ItemCompass
 			@SideOnly(Side.CLIENT)
 			public float apply(ItemStack stack, @Nullable World worldIn, @Nullable EntityLivingBase entityIn)
 			{
-				if (entityIn == null && !stack.isOnItemFrame())
+				if(stack.isOnItemFrame())
+					return 0.0F;
+
+				if (entityIn == null)
 				{
 					return 0.0F;
 				}

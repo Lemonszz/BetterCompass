@@ -7,6 +7,9 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * Created by Sam on 3/02/2018.
@@ -28,7 +31,8 @@ public class ModItems
 	{
 		registerRender(compass);
 	}
-	
+
+	@SideOnly(Side.CLIENT)
 	protected static void registerRender(Item item)
 	{
 		ModelResourceLocation loc = new ModelResourceLocation( item.getRegistryName(), "inventory");
