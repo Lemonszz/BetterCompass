@@ -97,9 +97,18 @@ public class ItemCustomCompass extends ItemCompass
 			}
 		});
 
-		this.setRegistryName("minecraft", "compass");
+		if (ModConfig.useHomingCompassInstead)
+		{
+			this.setRegistryName("bettercompass", "homing_compass");
+			this.setUnlocalizedName("bettercompass.homing_compass");
+		}
+		else
+		{
+			this.setRegistryName("minecraft", "compass");
+			this.setUnlocalizedName("compass");
+		}
+
 		this.setCreativeTab(CreativeTabs.TOOLS);
-		this.setUnlocalizedName("compass");
 		this.setMaxStackSize(1);
 	}
 
