@@ -1,0 +1,31 @@
+{
+  "_comment": [
+      "Compass that points towards a set location"
+   ],
+  "conditions": [
+    {
+      "type" : "minecraft:item_exists",
+      "item" : "bettercompass:homing_compass"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "group": "homing_compass",
+  "pattern": [
+    "xxx",
+    "xyx",
+    "xxx" ],
+  "key": {
+     "x": {
+        "item": "minecraft:redstone"
+     },
+     "y": {
+        "item": "minecraft:compass"
+    }
+  },
+  "experience": 0.0,
+  "result": {
+    "item": "bettercompass:homing_compass",
+    "data": 0
+  }
+}
+
