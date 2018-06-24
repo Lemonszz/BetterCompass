@@ -5,6 +5,12 @@
       "bettercompass:homing_compass"
     ]
   },
+  "conditions": [
+    {
+      "type" : "minecraft:item_exists",
+      "item" : "bettercompass:homing_compass"
+    }
+  ],
   "criteria": {
     "has_redstone": {
       "trigger": "minecraft:inventory_changed",
