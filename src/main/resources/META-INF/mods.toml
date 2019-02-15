@@ -1,0 +1,14 @@
+modLoader="javafml" #mandatory
+loaderVersion="[24,)" #mandatory (24 is current forge version)
+issueTrackerURL="https://github.com/Lemonszz/BetterCompass/issues" #optional
+displayURL="https://github.com/Lemonszz/BetterCompass" #optional
+authors="Lemons" #optional
+[[mods]] #mandatory
+modId="bettercompass" #mandatory
+version="${file.jarVersion}" #mandatory
+displayName="Better Compass" #mandatory
+# The description text for the mod (multi line!) (#mandatory)
+description='''
+Settable Compasses!
+
+'''

@@ -2,14 +2,11 @@ package party.lemons.bettercompass.item;
 
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItemFrame;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.IItemPropertyGetter;
-import net.minecraft.item.ItemCompass;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.*;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.EnumActionResult;
@@ -18,11 +15,11 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.*;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import party.lemons.bettercompass.config.CompassSetting;
 import party.lemons.bettercompass.config.ModConfig;
 
@@ -34,14 +31,22 @@ import java.util.List;
  */
 public class ItemCustomCompass extends ItemCompass
 {
+	private static final Properties PROPS = new Item.Properties().group(ItemGroup.TOOLS).maxStackSize(1);
+
 	public ItemCustomCompass()
 	{
-		this.addPropertyOverride(new ResourceLocation("angle"), new IItemPropertyGetter()
-		{
+		super(PROPS);
 
-			@SideOnly(Side.CLIENT)
-			public float apply(ItemStack stack, @Nullable World worldIn, @Nullable EntityLivingBase entityIn)
-			{
+		this.addPropertyOverride(new ResourceLocation("angle"), new IItemPropertyGetter() {
+			@OnlyIn(Dist.CLIENT)
+			private double rotation;
+			@OnlyIn(Dist.CLIENT)
+			private double rota;
+			@OnlyIn(Dist.CLIENT)
+			private long lastUpdateTick;
+
+			@OnlyIn(Dist.CLIENT)
+			public float call(ItemStack stack, @Nullable World worldIn, @Nullable EntityLivingBase entityIn) {
 				if(stack.isOnItemFrame())
 					return 0.0F;
 
@@ -52,7 +57,7 @@ public class ItemCustomCompass extends ItemCompass
 				else
 				{
 					boolean flag = entityIn != null;
-					NBTTagCompound tags = stack.getTagCompound();
+					NBTTagCompound tags = stack.getTag();
 					Entity entity = flag ? entityIn : stack.getItemFrame();
 
 					if (worldIn == null)
@@ -63,10 +68,10 @@ public class ItemCustomCompass extends ItemCompass
 					double d0;
 					int dim = 0;
 					if(tags != null && tags.hasKey("dim"))
-						dim = tags.getInteger("dim");
+						dim = tags.getInt("dim");
 
-					boolean isSameDim = entityIn.dimension == dim;
-					boolean show = isSameDim && (worldIn.provider.isSurfaceWorld() || ModConfig.allowCompassInAllDimensions);
+					boolean isSameDim = entityIn.dimension.getId() == dim;
+					boolean show = isSameDim && (worldIn.dimension.isSurfaceWorld() || ModConfig.allowCompassInAllDimensions);
 
 					if (show)
 					{
@@ -86,13 +91,12 @@ public class ItemCustomCompass extends ItemCompass
 				}
 			}
 
-			@SideOnly(Side.CLIENT)
-			private double getFrameRotation(EntityItemFrame p_185094_1_)
-			{
+			@OnlyIn(Dist.CLIENT)
+			private double getFrameRotation(EntityItemFrame p_185094_1_) {
 				return (double)MathHelper.wrapDegrees(180 + p_185094_1_.facingDirection.getHorizontalIndex() * 90);
 			}
 
-			@SideOnly(Side.CLIENT)
+			@OnlyIn(Dist.CLIENT)
 			private double getSpawnToAngle(World world, Entity entity, ItemStack stack)
 			{
 				BlockPos pos = ItemCustomCompass.getPositionFromStack(stack, world);
@@ -103,21 +107,21 @@ public class ItemCustomCompass extends ItemCompass
 		if (ModConfig.useHomingCompassInstead)
 		{
 			this.setRegistryName("bettercompass", "homing_compass");
-			this.setUnlocalizedName("bettercompass.homing_compass");
 		}
 		else
 		{
 			this.setRegistryName("minecraft", "compass");
-			this.setUnlocalizedName("compass");
 		}
-
-		this.setCreativeTab(CreativeTabs.TOOLS);
-		this.setMaxStackSize(1);
 	}
 
-	public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+	public EnumActionResult onItemUse(ItemUseContext ctx)
 	{
-		if(!ModConfig.allowCompassInAllDimensions && !worldIn.provider.isSurfaceWorld())
+		World worldIn = ctx.getWorld();
+		EntityPlayer player = ctx.getPlayer();
+		ItemStack stack = ctx.getItem();
+		BlockPos pos = ctx.getPos();
+
+		if(!ModConfig.allowCompassInAllDimensions && !worldIn.dimension.isSurfaceWorld())
 		{
 			return EnumActionResult.FAIL;
 		}
@@ -125,19 +129,18 @@ public class ItemCustomCompass extends ItemCompass
 		if(ModConfig.compassActivateType == CompassSetting.SNEAK && !player.isSneaking())
 			return EnumActionResult.FAIL;
 
-		ItemStack stack = player.getHeldItem(hand);
 
-		if(ModConfig.compassActivateType == CompassSetting.REQUIRE_EMPTY && stack.hasTagCompound())
+		if(ModConfig.compassActivateType == CompassSetting.REQUIRE_EMPTY && stack.hasTag())
 			return EnumActionResult.FAIL;
 
-		NBTTagCompound tags = stack.getTagCompound();
+		NBTTagCompound tags = stack.getTag();
 		if(tags == null)
 			tags = new NBTTagCompound();
 
-		tags.setTag("pos", NBTUtil.createPosTag(pos));
-		tags.setInteger("dim", player.dimension);
+		tags.setTag("pos", NBTUtil.writeBlockPos(pos));
+		tags.setInt("dim", player.dimension.getId());
 
-		player.getHeldItem(hand).setTagCompound(tags);
+		stack.setTag(tags);
 		player.sendStatusMessage(new TextComponentTranslation("bettercompass.message.set"), true);
 		return EnumActionResult.SUCCESS;
 	}
@@ -145,9 +148,9 @@ public class ItemCustomCompass extends ItemCompass
 	public static BlockPos getPositionFromStack(ItemStack stack, World world)
 	{
 		BlockPos pos = world.getSpawnPoint();
-		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("pos"))
+		if(stack.hasTag() && stack.getTag().hasKey("pos"))
 		{
-			pos = NBTUtil.getPosFromTag(stack.getTagCompound().getCompoundTag("pos"));
+			pos = NBTUtil.readBlockPos(stack.getTag().getCompound("pos"));
 		}
 		return pos;
 	}
@@ -155,21 +158,24 @@ public class ItemCustomCompass extends ItemCompass
 	public static int getDimensionFromStack(ItemStack stack)
 	{
 		int dim = 0 ;
-		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("dim"))
+		if(stack.hasTag() && stack.getTag().hasKey("dim"))
 		{
-			return stack.getTagCompound().getInteger("dim");
+			return stack.getTag().getInt("dim");
 		}
 		return dim;
 	}
 
-	@SideOnly(Side.CLIENT)
-	public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
+	public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
 	{
 
-		if(stack.getTagCompound() != null && stack.getTagCompound().hasKey("pos"))
+		if(stack.getTag() != null && stack.getTag().hasKey("pos"))
 		{
 			if(ModConfig.showCustomLocationText)
-				tooltip.add(TextFormatting.DARK_PURPLE + I18n.format("bettercompass.message.info"));
+			{
+				TextComponentTranslation txt = new TextComponentTranslation("bettercompass.message.info");
+				txt.setStyle(new Style().setColor(TextFormatting.DARK_PURPLE));
+				tooltip.add(txt);
+			}
 
 			if(ModConfig.showLocationInfoText && worldIn != null)
 			{
@@ -189,20 +195,26 @@ public class ItemCustomCompass extends ItemCompass
 						break;
 				}
 
-				tooltip.add(TextFormatting.GRAY +  "x: " + pos.getX() + ", y: " + pos.getY() + ", z: " + pos.getZ());
-				tooltip.add(TextFormatting.GRAY + I18n.format("bettercompass.message.info.dimension") + ": " + I18n.format(dimText));
+				TextComponentString posText = new TextComponentString("x: " + pos.getX() + ", y: " + pos.getY() + ", z: " + pos.getZ());
+				posText.setStyle(new Style().setColor(TextFormatting.GRAY));
+
+				TextComponentString dimString = new TextComponentString(I18n.format("bettercompass.message.info.dimension") + ": " + I18n.format(dimText));
+				dimString.setStyle(posText.getStyle());
+
+				tooltip.add(posText);
+				tooltip.add(dimString);
 			}
 		}
 	}
 
-	@SideOnly(Side.CLIENT)
-	public void onUpdate(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected)
+	@OnlyIn(Dist.CLIENT)
+	public void inventoryTick(ItemStack stack, World worldIn, Entity entityIn, int itemSlot, boolean isSelected)
 	{
 		if(worldIn.isRemote)
 		{
-			if(stack.hasTagCompound())
+			if(stack.hasTag())
 			{
-				NBTTagCompound tags = stack.getTagCompound();
+				NBTTagCompound tags = stack.getTag();
 
 				long lastUpdateTick = 0;
 				double rotation = 0;
@@ -215,9 +227,9 @@ public class ItemCustomCompass extends ItemCompass
 					rota = tags.getDouble("rota");
 
 
-				if (worldIn.getTotalWorldTime() != lastUpdateTick)
+				if (worldIn.getGameTime() != lastUpdateTick)
 				{
-					lastUpdateTick = worldIn.getTotalWorldTime();
+					lastUpdateTick = worldIn.getGameTime();
 					double d0 = Math.random() - rotation;
 					d0 = MathHelper.positiveModulo(d0 + 0.5D, 1.0D) - 0.5D;
 					rota += d0 * 0.1D;
@@ -232,3 +244,4 @@ public class ItemCustomCompass extends ItemCompass
 		}
 	}
 }
+
