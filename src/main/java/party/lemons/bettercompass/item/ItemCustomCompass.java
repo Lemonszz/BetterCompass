@@ -10,18 +10,14 @@ import net.minecraft.item.*;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.*;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import party.lemons.bettercompass.config.CompassSetting;
-import party.lemons.bettercompass.config.ModConfig;
+import party.lemons.bettercompass.config.Config;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -71,7 +67,7 @@ public class ItemCustomCompass extends ItemCompass
 						dim = tags.getInt("dim");
 
 					boolean isSameDim = entityIn.dimension.getId() == dim;
-					boolean show = isSameDim && (worldIn.dimension.isSurfaceWorld() || ModConfig.allowCompassInAllDimensions);
+					boolean show = isSameDim && (worldIn.dimension.isSurfaceWorld() || Config.allowCompassInAllDimensions.get());
 
 					if (show)
 					{
@@ -103,15 +99,7 @@ public class ItemCustomCompass extends ItemCompass
 				return Math.atan2((double)pos.getZ() - entity.posZ, (double)pos.getX() - entity.posX);
 			}
 		});
-
-		if (ModConfig.useHomingCompassInstead)
-		{
-			this.setRegistryName("bettercompass", "homing_compass");
-		}
-		else
-		{
-			this.setRegistryName("minecraft", "compass");
-		}
+		this.setRegistryName("minecraft", "compass");
 	}
 
 	public EnumActionResult onItemUse(ItemUseContext ctx)
@@ -121,17 +109,10 @@ public class ItemCustomCompass extends ItemCompass
 		ItemStack stack = ctx.getItem();
 		BlockPos pos = ctx.getPos();
 
-		if(!ModConfig.allowCompassInAllDimensions && !worldIn.dimension.isSurfaceWorld())
+		if(!Config.allowCompassInAllDimensions.get() && !worldIn.dimension.isSurfaceWorld())
 		{
 			return EnumActionResult.FAIL;
 		}
-
-		if(ModConfig.compassActivateType == CompassSetting.SNEAK && !player.isSneaking())
-			return EnumActionResult.FAIL;
-
-
-		if(ModConfig.compassActivateType == CompassSetting.REQUIRE_EMPTY && stack.hasTag())
-			return EnumActionResult.FAIL;
 
 		NBTTagCompound tags = stack.getTag();
 		if(tags == null)
@@ -170,14 +151,14 @@ public class ItemCustomCompass extends ItemCompass
 
 		if(stack.getTag() != null && stack.getTag().hasKey("pos"))
 		{
-			if(ModConfig.showCustomLocationText)
+			if(Config.showCustomLocationText.get())
 			{
 				TextComponentTranslation txt = new TextComponentTranslation("bettercompass.message.info");
 				txt.setStyle(new Style().setColor(TextFormatting.DARK_PURPLE));
 				tooltip.add(txt);
 			}
 
-			if(ModConfig.showLocationInfoText && worldIn != null)
+			if(Config.showLocationInfoText.get() && worldIn != null)
 			{
 				BlockPos pos = getPositionFromStack(stack, worldIn);
 				int dim = getDimensionFromStack(stack);
